@@ -2,14 +2,14 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include <ftadvanc.h>
-#include <ftsnames.h>
-#include <tttables.h>
+#include <freetype/ftadvanc.h>
+#include <freetype/ftsnames.h>
+#include <freetype/tttables.h>
 
 #include <harfbuzz/hb.h>
 #include <harfbuzz/hb-ft.h>
@@ -91,35 +91,45 @@ int main () {
     /** Setup our SDL window **/
     int width      = 800;
     int height     = 600;
-    int videoFlags = SDL_SWSURFACE | SDL_RESIZABLE | SDL_DOUBLEBUF;
     int bpp        = 32;
 
     /* Initialize our SDL window */
     if(SDL_Init(SDL_INIT_VIDEO) < 0)   { 
-        fprintf(stderr, "Failed to initialize SDL");
+        fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError( ));
         return -1; 
     } 
 
-    SDL_WM_SetCaption("\"Simple\" SDL+Cairo+FreeType+HarfBuzz Example", "\"Simple\" SDL+Cairo+FreeType+HarfBuzz Example");
+    SDL_Window *sdlWindow = SDL_CreateWindow("\"Simple\" SDL+Cairo+FreeType+HarfBuzz Example",
+    SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_OPENGL);
+    if (!sdlWindow) {
+        fprintf(stderr, "Could not create window: %s\n", SDL_GetError( ));
+        exit(-1);
+    }
 
-    SDL_Surface *screen; 
-    screen = SDL_SetVideoMode(width, height, bpp, videoFlags); 
+    SDL_Renderer *sdlRenderer = SDL_CreateRenderer(sdlWindow, -1, 0);
+    if (!sdlRenderer) {
+        fprintf(stderr, "Could not create renderer: %s\n", SDL_GetError( ));
+        exit(-1);
+    }
 
     /* Enable key repeat, just makes it so we don't have to worry about fancy
      * scanboard keyboard input and such */
-    SDL_EnableKeyRepeat(300, 130);
-    SDL_EnableUNICODE(1); 
 
 
     /* Create an SDL image surface we can hand to cairo to draw to */
     SDL_Surface *sdl_surface = SDL_CreateRGBSurface (
-            videoFlags, width, height, 32,
+            0, width, height, bpp,
             0x00ff0000,
             0x0000ff00,
             0x000000ff,
             0
         );
 
+    SDL_Texture *sdlTexture = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+    if (!sdlTexture) {
+        fprintf(stderr, "Could not get a surface after resize: %s\n", SDL_GetError( ));
+        exit(-1);
+    }
 
     /* Our main event/draw loop */
     int done = 0;
@@ -198,8 +208,10 @@ int main () {
         /******************************************************************************/
 
         /* Blit our new image to our visible screen */ 
-        SDL_BlitSurface(sdl_surface, NULL, screen, NULL); 
-        SDL_Flip(screen); 
+        sdlTexture = SDL_CreateTextureFromSurface(sdlRenderer, sdl_surface);
+        SDL_RenderCopy(sdlRenderer, sdlTexture, NULL, NULL);
+        SDL_RenderPresent(sdlRenderer);
+
 
         /* We're now done with our cairo surface */
         cairo_surface_destroy(cairo_surface);
@@ -220,18 +232,20 @@ int main () {
                     done = 1;
                     break;
 
-                case SDL_VIDEORESIZE:
-                    width = event.resize.w;
-                    height = event.resize.h;
-                    screen = SDL_SetVideoMode(event.resize.w, event.resize.h, bpp, videoFlags);
-                    if (!screen) {
-                        fprintf(stderr, "Could not get a surface after resize: %s\n", SDL_GetError( ));
+                case SDL_WINDOWEVENT_RESIZED:
+                    width = event.window.data1;
+                    height = event.window.data2;
+                    fprintf(stdout, "New window dimensions %dx%d\n", width, height);
+                    SDL_DestroyTexture(sdlTexture);
+                    sdlTexture = SDL_CreateTexture(sdlRenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+                    if (!sdlTexture) {
+                        fprintf(stderr, "Could not get a new texture after resize: %s\n", SDL_GetError( ));
                         exit(-1);
                     }
                     /* Create an SDL image surface we can hand to cairo to draw to */
                     SDL_FreeSurface(sdl_surface);
                     sdl_surface = SDL_CreateRGBSurface (
-                            videoFlags, width, height, 32,
+                            0, width, height, 32,
                             0x00ff0000,
                             0x0000ff00,
                             0x000000ff,
