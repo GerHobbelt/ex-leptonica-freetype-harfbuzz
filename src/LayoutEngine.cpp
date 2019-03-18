@@ -25,8 +25,8 @@ U_NAMESPACE_BEGIN
 /* Leave this copyright notice here! It needs to go somewhere in this library. */
 static const char copyright[] = U_COPYRIGHT_STRING;
 
-const le_int32 LayoutEngine::kTypoFlagKern = 0x1;
-const le_int32 LayoutEngine::kTypoFlagLiga = 0x2;
+const le_int32 U_EXPORT LayoutEngine::kTypoFlagKern = 0x1;
+const le_int32 U_EXPORT LayoutEngine::kTypoFlagLiga = 0x2;
 
 UOBJECT_DEFINE_RTTI_IMPLEMENTATION(LayoutEngine)
 
