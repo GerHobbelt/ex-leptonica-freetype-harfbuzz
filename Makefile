@@ -4,11 +4,11 @@ PREFIX?=/usr
 export PKG_CONFIG_PATH:=$(PREFIX)/lib/pkgconfig
 CC=gcc
 CFLAGS=--std=c99 -ggdb3 -Wall -Wextra -pedantic \
-    `pkg-config sdl --cflags` \
+    `pkg-config sdl2 --cflags` \
     `pkg-config freetype2 --cflags` \
     `pkg-config harfbuzz --cflags`
 LIBS=\
-    `pkg-config sdl --libs` \
+    `pkg-config sdl2 --libs` \
     `pkg-config freetype2 --libs` \
     `pkg-config harfbuzz --libs`
 
