@@ -4,6 +4,7 @@
 #include <assert.h>
 
 #include <SDL.h>
+#include <SDL_image.h>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -231,10 +232,10 @@ int main () {
     int bpp        = 32;
 
     /* Initialize our SDL window */
-    if(SDL_Init(SDL_INIT_VIDEO) < 0)   {
-        fprintf(stderr, "Failed to initialize SDL");
-        return -1;
-    }
+    if(SDL_Init(SDL_INIT_VIDEO) < 0)   { 
+        fprintf(stderr, "Failed to initialize SDL: %s\n", SDL_GetError( ));
+        return -1; 
+    } 
 
     SDL_WM_SetCaption("\"Simple\" SDL+FreeType+HarfBuzz Example", "\"Simple\" SDL+FreeType+HarfBuzz Example");
 
